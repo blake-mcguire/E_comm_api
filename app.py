@@ -318,14 +318,14 @@ def update_customer_account(account_id):
 @app.route('/customer_accounts/<int:account_id>', methods=['DELETE'])
 def delete_customer_account(account_id):
     try:
-        # Delete related sessions
+
         sessions = db.session.execute(select(SessionTable).filter_by(customer_account_id=account_id)).scalars().all()
         if sessions:
             for session in sessions:
                 db.session.delete(session)
             db.session.commit()
 
-        # Delete related orders and order_product entries
+
         orders = db.session.execute(select(Order).filter_by(customer_id=account_id)).scalars().all()
         if orders:
             for order in orders:
@@ -333,7 +333,6 @@ def delete_customer_account(account_id):
                 db.session.delete(order)
             db.session.commit()
 
-        # Delete the customer account
         customer_account = db.session.execute(select(CustomerAccount).filter_by(account_id=account_id)).scalar_one_or_none()
         if customer_account is None:
             return jsonify({"error": "Customer account not found"}), 404
@@ -344,13 +343,12 @@ def delete_customer_account(account_id):
         return jsonify({"success": True})
 
     except Exception as e:
-        # Log the error
+
         app.logger.error(f"Error deleting customer account: {e}")
         db.session.rollback()
         return jsonify({"error": "An error occurred while deleting the customer account"}), 500
 
 
-# Product CRUD
 @app.route('/products', methods=["POST"])
 def add_product():
     try:
@@ -434,7 +432,6 @@ def add_order():
 
     new_order = Order(customer_id=order_data['customer_id'], date=order_data['date'])
 
-    # Create a set to track added products and prevent duplicates
     added_products = set()
 
     for product_id in products:
@@ -475,7 +472,7 @@ def update_order(order_id):
 
 @app.route("/orders/<int:order_id>", methods=["DELETE"])
 def delete_order(order_id):
-    # Delete related order_product entries first
+
     db.session.execute(order_product.delete().where(order_product.c.order_id == order_id))
     
     order = db.session.execute(select(Order).filter(Order.order_id == order_id)).scalar()
